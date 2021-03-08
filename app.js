@@ -10,7 +10,7 @@ const fs = require('fs')
 mongoose.connect(`mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.qkyhf.azure.mongodb.net/${MONGODB_DATABASE}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
 )
-const baseUrl = "http://localhost:3000/files/";
+const baseUrl = process.env.BASE_URL;
 
 global.__basedir = __dirname;
 
