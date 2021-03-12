@@ -1,16 +1,18 @@
+require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
 const imageModel = require('./models/image')
 const { ApolloServer, gql } = require('apollo-server-express');
-const {GraphQLUpload, graphqlUploadExpress} = require('graphql-upload')
+const { GraphQLUpload, graphqlUploadExpress } = require('graphql-upload');
 // const cors = require('cors')
 // const initRoutes = require('./src/routes')
 const fs = require('fs')
+const path = require('path')
+const env = process.env;
 
-mongoose.connect(`mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.qkyhf.azure.mongodb.net/${MONGODB_DATABASE}?retryWrites=true&w=majority`,
+mongoose.connect(`mongodb+srv://${env.MONGODB_USERNAME}:${env.MONGODB_PASSWORD}@cluster0.qkyhf.azure.mongodb.net/${env.MONGODB_DATABASE}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
 )
-const baseUrl = process.env.BASE_URL;
 
 global.__basedir = __dirname;
 
@@ -37,7 +39,7 @@ const typeDefs = gql`
     type Mutation {
       addImage(imageInput: ImageInput): Image,
       updateImage(imageId: String, imageInput: ImageInput): Image,
-      singleUpload(file: Upload!):File!
+      singleUpload(file: Upload!): Image!
     }
 
     type Image {
@@ -111,42 +113,57 @@ const resolvers = {
             }
         },
         singleUpload: async (parent, { file }) => {
-            console.log(file)
             const { createReadStream, filename, mimetype, encoding } = await file;
-            let path = __basedir + "/resources/static/assets/uploads/" + filename;
-            let stream = createReadStream();
-            return new Promise((resolve, reject) => {
-                stream
-                    .pipe(fs.createWriteStream(path))
-                    .on("finish", () => {
-
-                        resolve({
-                            success: true,
-                            message: "Successfully Uploaded",
-                            mimetype, filename, encoding, location: path
+            try {
+                let storageLocation =  "/resources/static/assets/uploads/" + filename
+                let path = __basedir + storageLocation;
+                let stream = createReadStream();
+                let savingFile = await new Promise((resolve, reject) => {
+                    stream
+                        .pipe(fs.createWriteStream(path))
+                        .on("finish", () => {
+                            resolve({
+                                success: true,
+                                message: "Successfully Uploaded",
+                                mimetype, filename, encoding, location: path
+                            })
                         })
-                    })
-                    .on("error", (err) => {
-                        console.log(err)
-                        console.log("Error Event Emitted")
-                        reject({
-                            success: false,
-                            message: "Failed"
+                        .on("error", (err) => {
+                             console.log(err)
+                            console.log("Error Event Emitted")
+                            reject({
+                                success: false,
+                                message: "Failed"
+                            })
                         })
+                })
+                if (savingFile.success) {
+                    let image = await imageModel.create({
+                        title: filename,
+                        url: path,
+                        date: Date.now()
                     })
-            })
+                    return image;
+                }
+            }
+            catch (e) {
+                console.log(e)
+            }
         }
     }
 }
 
-
 const server = new ApolloServer({ typeDefs, resolvers, uploads: false })
 const app = express();
 app.use(graphqlUploadExpress())
-// const corsOptions = { origin: "http://localhost:3000" }
+app.use('/resources',express.static(path.join(__dirname, 'resources')))
+// const corsOptions = { origin: "da }
 // app.use(cors(corsOptions))
 // app.use(express.urlencoded({ extended: true }));
 // initRoutes(app);
 
 server.applyMiddleware({ app })
-app.listen(3001, () => console.log('listening to port localhost:3001' + server.graphqlPath))
+
+app.listen(3001, () => {
+    console.log('listening to port localhost:3001' + server.graphqlPath)
+})
