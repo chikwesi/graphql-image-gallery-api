@@ -1,8 +1,9 @@
 require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
-const { ApolloServer, gql } = require('apollo-server-express');
+const { ApolloServer } = require('apollo-server-express');
 const { graphqlUploadExpress } = require('graphql-upload');
+const url = require('url')
 const resolvers = require('./src/resolvers/resolvers')
 const typeDefs = require('./src/typedefs/typedef')
 // const cors = require('cors')
@@ -32,7 +33,15 @@ global.__basedir = __dirname;
 
 
 
-const server = new ApolloServer({ typeDefs, resolvers, uploads: false })
+const server = new ApolloServer({
+    typeDefs, resolvers, uploads: false,
+    context: ({ req }) => ({
+        fullUrl: url.format({
+            protocol: req.protocol,
+            host: req.get('host'),
+        })
+    })
+})
 const app = express();
 app.use(graphqlUploadExpress())
 app.use('/resources', express.static(path.join(__dirname, 'resources')))

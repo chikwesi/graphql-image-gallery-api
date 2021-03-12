@@ -4,7 +4,13 @@ const fs = require('fs')
 const resolvers = {
     Upload: GraphQLUpload,
     Query: {
-        getImages: async () => await imageModel.find({}),
+        getImages: async (_, __, context) => {
+            const images = await imageModel.find({})
+            return images.map(img => {
+                img.url = context.fullUrl + img.url
+                return img
+            })
+        },
         uploads: async () => {
             const directoryPath = __basedir + "/resources/static/assets/uploads";
             try {
