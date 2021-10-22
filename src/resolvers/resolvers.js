@@ -7,7 +7,7 @@ const resolvers = {
         getImages: async (_, __, context) => {
             const images = await imageModel.find({})
             return images.map(img => {
-                img.url = context.fullUrl + img.url
+                img.url = context.baseUrl + img.url
                 return img
             })
         },

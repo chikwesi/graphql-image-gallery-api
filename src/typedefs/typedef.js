@@ -1,4 +1,16 @@
 const { gql } = require('apollo-server-express');
+
+/**
+ *
+ * Object
+ * Scalar = Int, String, Float, Boolean, ID
+ * Mutation
+ * Query
+ * Input
+ * Enum
+ * ! means it should not be null else throw error
+ *
+ */
 const typeDefs = gql`
     scalar Upload
     type File {

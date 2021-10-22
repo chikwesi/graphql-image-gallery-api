@@ -1,8 +1,8 @@
 require('dotenv').config()
-const express = require('express');
-const mongoose = require('mongoose');
 const { ApolloServer } = require('apollo-server-express');
 const { graphqlUploadExpress } = require('graphql-upload');
+const express = require('express');
+const mongoose = require('mongoose');
 const url = require('url')
 const resolvers = require('./src/resolvers/resolvers')
 const typeDefs = require('./src/typedefs/typedef')
@@ -18,25 +18,10 @@ mongoose.connect(`mongodb+srv://${env.MONGODB_USERNAME}:${env.MONGODB_PASSWORD}@
 
 global.__basedir = __dirname;
 
-
-/**
- *
- * Object
- * Scalar = Int, String, Float, Boolean, ID
- * Mutation
- * Query
- * Input
- * Enum
- * ! means it should not be null else throw error
- *
- */
-
-
-
 const server = new ApolloServer({
     typeDefs, resolvers, uploads: false,
     context: ({ req }) => ({
-        fullUrl: url.format({
+            baseUrl: url.format({
             protocol: req.protocol,
             host: req.get('host'),
         })
